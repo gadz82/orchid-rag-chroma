@@ -27,7 +27,14 @@ def _build_chroma_reader(
     embedding_model: str = "text-embedding-3-small",
     **_settings: Any,
 ) -> ChromaRepository:
+    import os as _os
+
     from orchid_ai.rag.embeddings import build_embeddings, get_embedding_dimension
+
+    if not chroma_path:
+        chroma_path = _os.environ.get("CHROMA_PATH")
+        if chroma_path:
+            chroma_client_type = "persistent"
 
     embeddings = build_embeddings(embedding_model)
     dimension = get_embedding_dimension(embedding_model)
