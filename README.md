@@ -1,6 +1,6 @@
 # orchid-rag-chroma
 
-ChromaDB vector-backend plugin for the [Orchid AI](https://github.com/gadz82/orchid) framework.
+ChromaDB vector backend plugin for the [Orchid AI](https://github.com/gadz82/orchid) framework.
 
 ## What it provides
 
