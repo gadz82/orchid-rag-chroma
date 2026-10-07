@@ -38,6 +38,12 @@ pytest tests/ -x
 
 ## Common Pitfalls
 
+- **Expand `~` before passing a path.** `ChromaRepository` applies
+  `os.path.expanduser()` to `path` because neither Python nor ChromaDB
+  expands `~` — an unexpanded value silently creates a literal
+  `<cwd>/~/...` directory, making the store working-directory dependent.
+  Keep the expansion in the constructor so every construction path is
+  covered.
 - ChromaDB **metadata filters are flat** — nested dicts are dropped by
   `_sanitize_metadata()` before writing.
 - ChromaDB's `query()` returns **distances**, not scores.  The repository

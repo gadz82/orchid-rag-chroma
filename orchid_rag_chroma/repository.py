@@ -13,11 +13,11 @@ and passes them inline — no per-collection embedding-function handoff.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-
 from orchid_ai.core.repository import OrchidSearchResult, OrchidVectorStoreRepository
 from orchid_ai.core.scopes import OrchidRAGScope
 
@@ -36,6 +36,9 @@ class ChromaRepository(OrchidVectorStoreRepository):
         ChromaDB HTTP port (only used when ``client_type="http"``).
     path:
         Persistence directory (only used when ``client_type="persistent"``).
+        A leading ``~`` is expanded to the user's home directory — ChromaDB
+        treats it as a literal directory name otherwise, silently creating
+        ``<cwd>/~/...``.
     embeddings:
         A LangChain :class:`Embeddings` instance.  Embeddings are
         pre-computed and passed inline to ChromaDB — no per-collection
@@ -65,7 +68,9 @@ class ChromaRepository(OrchidVectorStoreRepository):
         self._client_type = client_type
         self._host = host
         self._port = port
-        self._path = path
+        # Expand ``~`` here — ChromaDB passes the path straight to the OS,
+        # so ``"~/x"`` would otherwise create a literal ``<cwd>/~/x``.
+        self._path = os.path.expanduser(path) if path else None
         self._embeddings = embeddings
         self._embedding_dimension = embedding_dimension
 

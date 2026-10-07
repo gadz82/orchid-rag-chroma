@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.documents import Document
-
 from orchid_ai.core.scopes import OrchidRAGScope
 
 from orchid_rag_chroma.repository import ChromaRepository, _build_where, _sanitize_metadata
-
 
 # ── Helpers ─────────────────────────────────────────────────
 
@@ -65,9 +64,40 @@ def _repo(client: object | None = None) -> ChromaRepository:
 
 class TestConstruction:
     def test_missing_driver_raises_import_error(self):
-        with patch.dict("sys.modules", {"chromadb": None}):
-            with pytest.raises(ImportError, match="pip install orchid-rag-chroma"):
-                ChromaRepository(embeddings=MagicMock(), embedding_dimension=768)
+        with (
+            patch.dict("sys.modules", {"chromadb": None}),
+            pytest.raises(ImportError, match="pip install orchid-rag-chroma"),
+        ):
+            ChromaRepository(embeddings=MagicMock(), embedding_dimension=768)
+
+    def test_path_expands_tilde(self):
+        repo = ChromaRepository(
+            client_type="persistent",
+            path="~/.orchid/chroma",
+            embeddings=_mock_embeddings(),
+            embedding_dimension=768,
+        )
+        assert repo._path == os.path.expanduser("~/.orchid/chroma")
+        assert "~" not in repo._path
+
+    @pytest.mark.asyncio
+    async def test_persistent_client_uses_expanded_home(self, tmp_path, monkeypatch):
+        """Regression: ``~`` must not be treated as a literal directory name
+        (ChromaDB would create ``<cwd>/~/.orchid/chroma`` and the store would
+        move with the working directory)."""
+        monkeypatch.setenv("HOME", str(tmp_path))
+        monkeypatch.chdir(tmp_path)
+
+        repo = ChromaRepository(
+            client_type="persistent",
+            path="~/chroma-test",
+            embeddings=_mock_embeddings(),
+            embedding_dimension=768,
+        )
+        assert await repo._get_client() is not None
+
+        assert (tmp_path / "chroma-test").exists()
+        assert not (tmp_path / "~").exists()
 
 
 # ── Ensure collections ───────────────────────────────────────
