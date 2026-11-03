@@ -22,6 +22,7 @@ from orchid_ai.core.repository import OrchidSearchResult, OrchidVectorStoreRepos
 from orchid_ai.core.scopes import OrchidRAGScope
 
 
+# ORCHID-MEM: 01a1a0c1-dc0e-7d9f-b581-f7c7a04022ab — ChromaDB vector-store adapter
 class ChromaRepository(OrchidVectorStoreRepository):
     """ChromaDB-backed vector store.
 
